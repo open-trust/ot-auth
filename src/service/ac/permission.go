@@ -1,0 +1,169 @@
+package ac
+
+import (
+	"strings"
+
+	"github.com/open-trust/ot-auth/src/conf"
+)
+
+func init() {
+	// 初始化 OT-Auth 自身作为可信主体的默认权限
+	globalPM.Set(conf.OT.OTID.String(), Permission{
+		Resource:   string(ResRegistrationAll),
+		Operations: []string{string(OpGet), string(OpCreate)},
+		Extensions: []string{EkCreateRegistration.C("*"), EkGetRegistrationBundles.C("*")},
+	})
+	// 初始化 OT-Auth 以外的其它可信主体的默认权限
+	globalPM.Set(conf.OT.OTID.String()+":*", Permission{
+		Resource:   string(ResRegistration),
+		Operations: []string{string(OpGet)},
+	})
+
+	if conf.AppEnv == "testing" {
+		globalPM.Set(conf.OT.OTID.String(), Permission{
+			Resource:   string(ResAll),
+			Operations: []string{string(OpAll)},
+			Extensions: []string{EkCreateRegistration.C("*"), EkGetRegistrationBundles.C("*")},
+		})
+	}
+}
+
+var globalPM = make(PermissionsManager)
+
+// Operation ...
+type Operation string
+
+const (
+	// OpAll ...
+	OpAll Operation = "*"
+	// OpGet ...
+	OpGet Operation = "get"
+	// OpList ...
+	OpList Operation = "list"
+	// OpCreate ...
+	OpCreate Operation = "create"
+	// OpUpdate ...
+	OpUpdate Operation = "update"
+	// OpDelete ...
+	OpDelete Operation = "delete"
+)
+
+// Resource ...
+type Resource string
+
+const (
+	// ResAll ...
+	ResAll Resource = "*"
+	// ResFederation ...
+	ResFederation Resource = "federation"
+	// ResRegistrationAll ...
+	ResRegistrationAll Resource = "registration*"
+	// ResRegistration ...
+	ResRegistration Resource = "registration"
+	// ResRegistrationBundle ...
+	ResRegistrationBundle Resource = "registration.bundle"
+	// ResRegistrationPermission ...
+	ResRegistrationPermission Resource = "registration.permission"
+)
+
+// ExtensionKey ...
+type ExtensionKey string
+
+// C ...
+func (e ExtensionKey) C(value string) string {
+	return string(e) + value
+}
+
+const (
+	// EkCreateRegistration ...
+	EkCreateRegistration ExtensionKey = "createRegistrationPattern:"
+	// EkGetRegistrationBundles ...
+	EkGetRegistrationBundles ExtensionKey = "getRegistrationBundlesPattern:"
+)
+
+// Permission ...
+type Permission struct {
+	Resource   string
+	Operations []string
+	Extensions []string
+}
+
+// Match ...
+func (p Permission) Match(resource, operation string) bool {
+	if MatchPattern(resource, p.Resource) {
+		for _, op := range p.Operations {
+			if op == "*" || op == operation {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Permissions ...
+type Permissions []Permission
+
+// FindExtensionValues ...
+func (ps Permissions) FindExtensionValues(key ExtensionKey) []string {
+	res := make([]string, 0)
+	pattern := string(key)
+	for _, p := range ps {
+		for _, s := range p.Extensions {
+			if strings.HasPrefix(s, pattern) {
+				res = append(res, s[len(pattern):])
+			}
+		}
+	}
+	return res
+}
+
+// Find ...
+func (ps Permissions) Find(resource, operation string) Permissions {
+	res := make([]Permission, 0)
+	for _, p := range ps {
+		if p.Match(resource, operation) {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
+// PermissionsManager ...
+type PermissionsManager map[string]Permissions
+
+// Set ...
+func (pm PermissionsManager) Set(otidPattern string, p Permission) {
+	pm[otidPattern] = Permissions{p}
+}
+
+// Add ...
+func (pm PermissionsManager) Add(otidPattern string, p Permission) {
+	if _, ok := pm[otidPattern]; !ok {
+		pm[otidPattern] = Permissions{p}
+	} else {
+		pm[otidPattern] = append(pm[otidPattern], p)
+	}
+}
+
+// Find ...
+func (pm PermissionsManager) Find(otid, resource, operation string) Permissions {
+	res := make([]Permission, 0)
+	for key, ps := range pm {
+		if MatchPattern(otid, key) {
+			res = append(res, ps.Find(resource, operation)...)
+		}
+	}
+	return res
+}
+
+// MatchPattern ...
+func MatchPattern(s, pattern string) bool {
+	if pattern == "" {
+		return false
+	} else if pattern == "*" || s == pattern {
+		return true
+	} else if pattern[len(pattern)-1] == '*' {
+		return strings.HasPrefix(s, pattern[:len(pattern)-1])
+	}
+	return false
+}

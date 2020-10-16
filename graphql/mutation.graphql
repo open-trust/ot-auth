@@ -1,0 +1,21 @@
+mutation AddRegistrationForUser($input: AddUserRegistryInput!) {
+  addUserRegistry(input: [$input]) {
+    userRegistry {
+      id
+      createdAt
+      updatedAt
+      keysUpdatedAt
+    }
+  }
+}
+
+mutation AddRegistrationForService($input: AddServiceRegistryInput!) {
+  addServiceRegistry(input: [$input]) {
+    serviceRegistry {
+      id
+      createdAt
+      updatedAt
+      keysUpdatedAt
+    }
+  }
+}
