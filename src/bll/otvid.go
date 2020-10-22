@@ -2,11 +2,10 @@ package bll
 
 import (
 	"context"
-	"time"
 
 	"github.com/open-trust/ot-auth/src/conf"
 	"github.com/open-trust/ot-auth/src/model"
-	"github.com/open-trust/ot-auth/src/service"
+	"github.com/open-trust/ot-auth/src/service/federation"
 	"github.com/open-trust/ot-auth/src/tpl"
 	otgo "github.com/open-trust/ot-go-lib"
 	"github.com/teambition/gear"
@@ -37,10 +36,9 @@ func (b *OTVID) VerifySelf(ctx context.Context, token string) (*otgo.OTVID, *mod
 	}
 
 	// self OTVID don't have ReleaseID
-	ks, err := otgo.ParseKeys(info.Keys...)
+	ks, err := otgo.ParseSet(info.Keys...)
 	if err == nil {
 		err = vid.Verify(ks, vid.ID, conf.OT.OTID)
-		// TODO: 如果 federation domain 的 keys 过期，应该去读取最新值
 	}
 	if err != nil {
 		return nil, nil, gear.ErrUnauthorized.From(err)
@@ -77,24 +75,6 @@ func (b *OTVID) SignFromFederation(ctx context.Context, subVid *otgo.OTVID) (*tp
 		return nil, gear.ErrForbidden.WithMsgf("%s has been forbidden", trustDomain.String())
 	}
 
-	signingKey, err := otgo.LookupSigningKey(conf.OT.PrivateKeys)
-	if err != nil {
-		return nil, err
-	}
-
-	selfVid := &otgo.OTVID{
-		ID:       conf.OT.OTID,
-		Issuer:   conf.OT.OTID,
-		Audience: trustDomain.OTID(),
-		Expiry:   time.Now().Add(time.Minute),
-	}
-	token, err := selfVid.Sign(signingKey)
-	if err != nil {
-		return nil, err
-	}
-
-	cli := service.HTTPClient.WithToken(token)
-	url := info.ServiceEndpoints[0] + "/sign"
 	input := tpl.SignInput{
 		Subject:   subVid.ID,
 		Audience:  subVid.Audience,
@@ -104,7 +84,7 @@ func (b *OTVID) SignFromFederation(ctx context.Context, subVid *otgo.OTVID) (*tp
 	}
 	res := &tpl.SignPayload{}
 	output := &tpl.SuccessResponseType{Result: res}
-	if err = cli.Post(ctx, url, input, output); err != nil {
+	if err = federation.Cli.Sign(ctx, trustDomain, info.ServiceEndpoints[0], input, output); err != nil {
 		return nil, err
 	}
 	return res, nil

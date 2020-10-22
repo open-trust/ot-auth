@@ -21,7 +21,7 @@ func Verify(ctx *gear.Context) error {
 		return gear.ErrUnauthorized.WithMsg("invalid authorization token")
 	}
 
-	vid, err := conf.OT.Verifier.ParseOTVID(token)
+	vid, err := conf.OT.ParseOTVID(ctx, token)
 	if err != nil {
 		return gear.ErrUnauthorized.From(err)
 	}

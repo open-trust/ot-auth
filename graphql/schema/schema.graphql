@@ -46,6 +46,7 @@ type UserRegistryBundle {
   updatedAt: DateTime!
   provider: ServiceRegistry! # 绑定的第三方 ID 服务提供方
   bundleId: String! @search(by: [hash]) # 绑定的第三方 ID
+  extension: String!
   registry: UserRegistry! # 所属的用户类主体
   uk: String! @id # 联合索引 Base64(SHA1(subjectType, subjectID, bundleId))
 }

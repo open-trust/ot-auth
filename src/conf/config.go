@@ -3,7 +3,9 @@ package conf
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/open-trust/ot-auth/src/util"
 	otgo "github.com/open-trust/ot-go-lib"
@@ -56,7 +58,7 @@ func initOT(cfg *ConfigTpl) error {
 		TrustDomain: cfg.OpenTrust.OTID.TrustDomain(),
 	}
 	var err error
-	OT.PrivateKeys, err = otgo.ParseKeys(cfg.OpenTrust.PrivateKeys...)
+	OT.PrivateKeys, err = otgo.ParseSet(cfg.OpenTrust.PrivateKeys...)
 	if err != nil {
 		return err
 	}
@@ -64,16 +66,14 @@ func initOT(cfg *ConfigTpl) error {
 	if len(OT.PublicKeys.Keys) == 0 {
 		return errors.New("no public keys found")
 	}
-	OT.Holder, err = otgo.NewHolder(GlobalContext, cfg.OpenTrust.OTID)
+	OT.OTClient, err = otgo.NewOTClient(GlobalContext, cfg.OpenTrust.OTID)
 	if err != nil {
 		return err
 	}
-	OT.Holder.SetKeys(*OT.PrivateKeys)
-	OT.Verifier, err = otgo.NewVerifier(GlobalContext, cfg.OpenTrust.OTID, false)
-	if err != nil {
-		return err
-	}
-	OT.Verifier.SetKeys(*OT.PublicKeys)
+	OT.OTClient.SetPrivateKeys(*OT.PrivateKeys)
+	OT.OTClient.SetDomainKeys(*OT.PublicKeys)
+	ua := fmt.Sprintf("Go/%v %s/%s (%s)", runtime.Version(), AppName, AppVersion, OT.OTID.String())
+	OT.OTClient.SetHTTPClient(otgo.DefaultHTTPClient.WithUA(ua))
 	return nil
 }
 
@@ -84,8 +84,7 @@ type Logger struct {
 
 // Dgraph ...
 type Dgraph struct {
-	Endpoint      string `json:"graphql_endpoint" yaml:"graphql_endpoint"`
-	AdminEndpoint string `json:"admin_endpoint" yaml:"admin_endpoint"`
+	Endpoint string `json:"graphql_endpoint" yaml:"graphql_endpoint"`
 }
 
 // OpenTrust ...
@@ -120,24 +119,11 @@ func (c *ConfigTpl) Validate() error {
 
 // OT ...
 type ot struct {
+	*otgo.OTClient
 	TrustDomain otgo.TrustDomain
 	OTID        otgo.OTID
-	Holder      *otgo.Holder
-	Verifier    *otgo.Verifier
-	PrivateKeys *otgo.Keys
-	PublicKeys  *otgo.Keys
-}
-
-func (o *ot) NewVerifier(aud otgo.OTID) (*otgo.Verifier, error) {
-	if !aud.MemberOf(o.TrustDomain) {
-		return nil, errors.New("aud is not a member of trust domain")
-	}
-	verifier, err := otgo.NewVerifier(GlobalContext, aud, false)
-	if err != nil {
-		return nil, err
-	}
-	verifier.SetKeys(*OT.PublicKeys)
-	return verifier, nil
+	PrivateKeys *otgo.JWKSet
+	PublicKeys  *otgo.JWKSet
 }
 
 // SubjectType validate OTID' type, returns: 1 - user class, 2 - service class, 0 - unknown

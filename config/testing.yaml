@@ -7,8 +7,7 @@ trusted_proxy: false
 service_endpoints:
 - http://ot.example.com/v1
 dgraph:
-  graphql_endpoint: http://localhost:8080/graphql
-  admin_endpoint: http://localhost:8080/admin
+  graphql_endpoint: http://localhost:8088/graphql
 open_trust:
   otid: "otid:ot.example.com"
   keys_refresh_hint: 3600

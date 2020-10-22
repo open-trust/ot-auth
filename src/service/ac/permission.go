@@ -11,7 +11,7 @@ func init() {
 	globalPM.Set(conf.OT.OTID.String(), Permission{
 		Resource:   string(ResRegistrationAll),
 		Operations: []string{string(OpGet), string(OpCreate)},
-		Extensions: []string{EkCreateRegistration.C("*"), EkGetRegistrationBundles.C("*")},
+		Extensions: []string{EkCreateRegistration.V("*"), EkGetRegistrationBundles.V("*")},
 	})
 	// 初始化 OT-Auth 以外的其它可信主体的默认权限
 	globalPM.Set(conf.OT.OTID.String()+":*", Permission{
@@ -23,7 +23,7 @@ func init() {
 		globalPM.Set(conf.OT.OTID.String(), Permission{
 			Resource:   string(ResAll),
 			Operations: []string{string(OpAll)},
-			Extensions: []string{EkCreateRegistration.C("*"), EkGetRegistrationBundles.C("*")},
+			Extensions: []string{EkCreateRegistration.V("*"), EkGetRegistrationBundles.V("*")},
 		})
 	}
 }
@@ -69,8 +69,8 @@ const (
 // ExtensionKey ...
 type ExtensionKey string
 
-// C ...
-func (e ExtensionKey) C(value string) string {
+// V ...
+func (e ExtensionKey) V(value string) string {
 	return string(e) + value
 }
 

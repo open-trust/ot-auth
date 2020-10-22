@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/open-trust/ot-auth/src/api"
+	"github.com/open-trust/ot-auth/src/app"
 	"github.com/open-trust/ot-auth/src/conf"
 	"github.com/open-trust/ot-auth/src/logging"
 )
@@ -27,7 +27,7 @@ func main() {
 		conf.Config.SrvAddr = ":8080"
 	}
 
-	app := api.NewApp()
+	app := app.New()
 	prefix := "http://"
 	if conf.Config.CertFile != "" && conf.Config.KeyFile != "" {
 		prefix = "https://"

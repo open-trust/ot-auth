@@ -64,6 +64,7 @@ type AddUserRegistryBundleInput struct {
 	UpdatedAt time.Time           `json:"updatedAt"`
 	Provider  *ServiceRegistryRef `json:"provider"`
 	BundleID  string              `json:"bundleId"`
+	Extension string              `json:"extension"`
 	Registry  *UserRegistryRef    `json:"registry"`
 	Uk        string              `json:"uk"`
 }
@@ -419,6 +420,7 @@ type UserRegistryBundle struct {
 	UpdatedAt time.Time        `json:"updatedAt"`
 	Provider  *ServiceRegistry `json:"provider"`
 	BundleID  string           `json:"bundleId"`
+	Extension string           `json:"extension"`
 	Registry  *UserRegistry    `json:"registry"`
 	Uk        string           `json:"uk"`
 }
@@ -443,6 +445,7 @@ type UserRegistryBundlePatch struct {
 	UpdatedAt *time.Time          `json:"updatedAt"`
 	Provider  *ServiceRegistryRef `json:"provider"`
 	BundleID  *string             `json:"bundleId"`
+	Extension *string             `json:"extension"`
 	Registry  *UserRegistryRef    `json:"registry"`
 }
 
@@ -452,6 +455,7 @@ type UserRegistryBundleRef struct {
 	UpdatedAt *time.Time          `json:"updatedAt"`
 	Provider  *ServiceRegistryRef `json:"provider"`
 	BundleID  *string             `json:"bundleId"`
+	Extension *string             `json:"extension"`
 	Registry  *UserRegistryRef    `json:"registry"`
 	Uk        *string             `json:"uk"`
 }
@@ -817,6 +821,7 @@ const (
 	UserRegistryBundleOrderableCreatedAt UserRegistryBundleOrderable = "createdAt"
 	UserRegistryBundleOrderableUpdatedAt UserRegistryBundleOrderable = "updatedAt"
 	UserRegistryBundleOrderableBundleID  UserRegistryBundleOrderable = "bundleId"
+	UserRegistryBundleOrderableExtension UserRegistryBundleOrderable = "extension"
 	UserRegistryBundleOrderableUk        UserRegistryBundleOrderable = "uk"
 )
 
@@ -824,12 +829,13 @@ var AllUserRegistryBundleOrderable = []UserRegistryBundleOrderable{
 	UserRegistryBundleOrderableCreatedAt,
 	UserRegistryBundleOrderableUpdatedAt,
 	UserRegistryBundleOrderableBundleID,
+	UserRegistryBundleOrderableExtension,
 	UserRegistryBundleOrderableUk,
 }
 
 func (e UserRegistryBundleOrderable) IsValid() bool {
 	switch e {
-	case UserRegistryBundleOrderableCreatedAt, UserRegistryBundleOrderableUpdatedAt, UserRegistryBundleOrderableBundleID, UserRegistryBundleOrderableUk:
+	case UserRegistryBundleOrderableCreatedAt, UserRegistryBundleOrderableUpdatedAt, UserRegistryBundleOrderableBundleID, UserRegistryBundleOrderableExtension, UserRegistryBundleOrderableUk:
 		return true
 	}
 	return false

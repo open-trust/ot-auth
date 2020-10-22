@@ -1,4 +1,4 @@
-.PHONY: dev test image doc gen
+.PHONY: dev test doc gen
 
 APP_NAME := ot-auth
 APP_PATH := github.com/open-trust/ot-auth
@@ -19,21 +19,21 @@ doc:
 BUILD_TIME := $(shell date -u +"%FT%TZ")
 BUILD_COMMIT := $(shell git rev-parse HEAD)
 
-.PHONY: build build-tool
+.PHONY: build build-linux
 build:
 	@mkdir -p ./dist
 	GO111MODULE=on go build -ldflags "-X ${APP_PATH}/src/conf.AppName=${APP_NAME} \
 	-X ${APP_PATH}/src/conf.AppVersion=${APP_VERSION} \
 	-X ${APP_PATH}/src/conf.BuildTime=${BUILD_TIME} \
 	-X ${APP_PATH}/src/conf.GitSHA1=${BUILD_COMMIT}" \
-	-o ./dist/app main.go
+	-o ./dist/ot-auth main.go
 build-linux:
 	@mkdir -p ./dist
 	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X ${APP_PATH}/src/conf.AppName=${APP_NAME} \
 	-X ${APP_PATH}/src/conf.AppVersion=${APP_VERSION} \
 	-X ${APP_PATH}/src/conf.BuildTime=${BUILD_TIME} \
 	-X ${APP_PATH}/src/conf.GitSHA1=${BUILD_COMMIT}" \
-	-o ./dist/app main.go
+	-o ./dist/ot-auth main.go
 
 PKG_LIST := $(shell go list ./... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
@@ -45,7 +45,10 @@ coverhtml:
 	@go tool cover -html=coverage/cover.out -o coverage/coverage.html
 	@go tool cover -func=coverage/cover.out | tail -n 1
 
-DOCKER_IMAGE_TAG := ${APP_NAME}:latest
-.PHONY: image
+IMAGE_TAG := ${APP_NAME}:latest
+.PHONY: image oci-image
 image:
-	docker build --rm -t ${DOCKER_IMAGE_TAG} .
+	docker build --rm -t ${IMAGE_TAG} .
+
+oci-image:
+	podman build --rm -t ${IMAGE_TAG} .

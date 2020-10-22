@@ -1,43 +1,24 @@
-package api
+package app
 
 import (
 	"github.com/teambition/gear"
 
-	"github.com/open-trust/ot-auth/src/bll"
+	"github.com/open-trust/ot-auth/src/api"
 	"github.com/open-trust/ot-auth/src/conf"
 	"github.com/open-trust/ot-auth/src/middleware"
 	"github.com/open-trust/ot-auth/src/util"
 )
 
 func init() {
-	util.DigProvide(newAPIs)
-	util.DigProvide(newRouters)
-}
-
-// APIs ..
-type APIs struct {
-	Healthz      *Healthz
-	WellKnown    *WellKnown
-	GraphQL      *GraphQL
-	Registration *Registration
-	OTVID        *OTVID
-}
-
-func newAPIs(blls *bll.Blls) *APIs {
-	return &APIs{
-		GraphQL:      &GraphQL{blls: blls},
-		Healthz:      &Healthz{blls: blls},
-		WellKnown:    &WellKnown{blls: blls},
-		Registration: &Registration{blls: blls},
-		OTVID:        &OTVID{blls: blls},
-	}
+	util.DigProvide(NewRouters)
 }
 
 func getVersion(ctx *gear.Context) error {
 	return ctx.OkJSON(conf.AppInfo())
 }
 
-func newRouters(apis *APIs) []*gear.Router {
+// NewRouters ...
+func NewRouters(apis *api.APIs) []*gear.Router {
 
 	router := gear.NewRouter()
 	router.Get("/", getVersion)
@@ -52,7 +33,7 @@ func newRouters(apis *APIs) []*gear.Router {
 		Root: "/v1",
 	})
 
-	routerV1.Get("/", getVersion)
+	routerV1.Get("/", apis.WellKnown.ServiceEndpoints)
 
 	routerV1.Post("/sign", apis.OTVID.Sign) // 自签发 OTVID，在 API 内验证
 	routerV1.Post("/verify", middleware.Verify, apis.OTVID.Verify)

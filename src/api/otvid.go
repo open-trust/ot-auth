@@ -68,7 +68,7 @@ func (a *OTVID) Sign(ctx *gear.Context) error {
 
 		if !vid.ID.Equal(input.Subject) {
 			// 当请求主体不是信任域主体并且是代理其它请求主体 sub 申请签发 OTVID，则必须提供目标 sub 的自签发 OTVID
-			_, signInfo, err = a.blls.OTVID.VerifySelf(ctx, input.OTVID)
+			_, signInfo, err = a.blls.OTVID.VerifySelf(ctx, input.ForwardedOTVID)
 			if err != nil {
 				return err
 			}
@@ -104,11 +104,7 @@ func (a *OTVID) Verify(ctx *gear.Context) error {
 	}
 
 	// 本接口无需验证请求主体的权限
-	vf, err := conf.OT.NewVerifier(input.Audience)
-	if err != nil {
-		return gear.ErrBadRequest.From(err)
-	}
-	vid, err := vf.ParseOTVID(input.OTVID)
+	vid, err := conf.OT.ParseOTVID(ctx, input.OTVID, input.Audience)
 	if err != nil {
 		// 解析或验证错误，错误信息以 200 响应
 		res := gear.ToErrorResponse(err)
@@ -119,11 +115,12 @@ func (a *OTVID) Verify(ctx *gear.Context) error {
 	if !ok && err == nil {
 		err = fmt.Errorf("OTVID %s has become invalid", vid.ID.String())
 	}
+	jwt, _ := vid.ToJWT()
 	if err != nil {
 		res := gear.ToErrorResponse(err)
 		res.Error.Code = 0
-		res.Error.Data = vid.ToJSON()
+		res.Error.Data = jwt
 		return ctx.OkJSON(res)
 	}
-	return ctx.OkJSON(tpl.SuccessResponseType{Result: vid.ToJSON()})
+	return ctx.OkJSON(tpl.SuccessResponseType{Result: jwt})
 }

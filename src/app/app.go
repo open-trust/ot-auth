@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"log"
@@ -12,8 +12,8 @@ import (
 	"github.com/open-trust/ot-auth/src/util"
 )
 
-// NewApp ...
-func NewApp() *gear.App {
+// New ...
+func New() *gear.App {
 	app := gear.New()
 
 	app.Set(gear.SetEnv, conf.AppEnv)

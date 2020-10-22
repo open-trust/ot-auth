@@ -25,3 +25,11 @@ func (a *WellKnown) OpenTrustConfiguration(ctx *gear.Context) error {
 		"keysRefreshHint":  conf.Config.OpenTrust.KeysRefreshHint,
 	})
 }
+
+// ServiceEndpoints ...
+func (a *WellKnown) ServiceEndpoints(ctx *gear.Context) error {
+	return ctx.OkJSON(map[string]interface{}{
+		"otid":             conf.OT.OTID,
+		"serviceEndpoints": conf.Config.ServiceEndpoints,
+	})
+}

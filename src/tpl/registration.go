@@ -51,7 +51,7 @@ func (t *AddRegistrationInput) Validate() error {
 	if l := len(t.ServiceEndpoints); l > 100 {
 		return gear.ErrBadRequest.WithMsgf("too many serviceEndpoints (> %d)", l)
 	}
-	ks, err := otgo.ParseKeys(t.Keys...)
+	ks, err := otgo.ParseSet(t.Keys...)
 	if err != nil {
 		return err
 	}
