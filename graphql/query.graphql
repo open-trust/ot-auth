@@ -13,19 +13,18 @@ query GetUserVerificationInfo($uk: String!, $includeKeys: Boolean!) {
   }
 }
 
-query GetServiceVerificationInfo($uk: String!, $includeKeys: Boolean!) {
+query GetServiceVerificationInfo($uk: String!, $includeKeys: Boolean!, $includeEndpoints: Boolean!) {
   getServiceRegistry(uk: $uk) {
     status
     keys @include(if: $includeKeys)
+    serviceEndpoints @include(if: $includeEndpoints)
   }
 }
 
-query GetFederationVerificationInfo($uk: String!, $includeKeys: Boolean!, $includeAllowed: Boolean!, $includeEndpoints: Boolean!) {
+query GetFederationVerificationInfo($uk: String!, $includeAllowed: Boolean!) {
   getDomainFederation(domain: $uk) {
     status
-    keys @include(if: $includeKeys)
     allowedList @include(if: $includeAllowed)
-    serviceEndpoints @include(if: $includeEndpoints)
   }
 }
 

@@ -83,16 +83,15 @@ type GetUserVerificationInfo struct {
 }
 type GetServiceVerificationInfo struct {
 	GetServiceRegistry *struct {
-		Status int      "json:\"status\" graphql:\"status\""
-		Keys   []string "json:\"keys\" graphql:\"keys\""
+		Status           int      "json:\"status\" graphql:\"status\""
+		Keys             []string "json:\"keys\" graphql:\"keys\""
+		ServiceEndpoints []string "json:\"serviceEndpoints\" graphql:\"serviceEndpoints\""
 	} "json:\"getServiceRegistry\" graphql:\"getServiceRegistry\""
 }
 type GetFederationVerificationInfo struct {
 	GetDomainFederation *struct {
-		Status           int      "json:\"status\" graphql:\"status\""
-		Keys             []string "json:\"keys\" graphql:\"keys\""
-		AllowedList      []string "json:\"allowedList\" graphql:\"allowedList\""
-		ServiceEndpoints []string "json:\"serviceEndpoints\" graphql:\"serviceEndpoints\""
+		Status      int      "json:\"status\" graphql:\"status\""
+		AllowedList []string "json:\"allowedList\" graphql:\"allowedList\""
 	} "json:\"getDomainFederation\" graphql:\"getDomainFederation\""
 }
 type GetUserBundles struct {
@@ -235,18 +234,20 @@ func (c *Client) GetUserVerificationInfo(ctx context.Context, uk string, include
 	return &res, nil
 }
 
-const GetServiceVerificationInfoQuery = `query GetServiceVerificationInfo ($uk: String!, $includeKeys: Boolean!) {
+const GetServiceVerificationInfoQuery = `query GetServiceVerificationInfo ($uk: String!, $includeKeys: Boolean!, $includeEndpoints: Boolean!) {
 	getServiceRegistry(uk: $uk) {
 		status
 		keys @include(if: $includeKeys)
+		serviceEndpoints @include(if: $includeEndpoints)
 	}
 }
 `
 
-func (c *Client) GetServiceVerificationInfo(ctx context.Context, uk string, includeKeys bool, httpRequestOptions ...client.HTTPRequestOption) (*GetServiceVerificationInfo, error) {
+func (c *Client) GetServiceVerificationInfo(ctx context.Context, uk string, includeKeys bool, includeEndpoints bool, httpRequestOptions ...client.HTTPRequestOption) (*GetServiceVerificationInfo, error) {
 	vars := map[string]interface{}{
-		"uk":          uk,
-		"includeKeys": includeKeys,
+		"uk":               uk,
+		"includeKeys":      includeKeys,
+		"includeEndpoints": includeEndpoints,
 	}
 
 	var res GetServiceVerificationInfo
@@ -257,22 +258,18 @@ func (c *Client) GetServiceVerificationInfo(ctx context.Context, uk string, incl
 	return &res, nil
 }
 
-const GetFederationVerificationInfoQuery = `query GetFederationVerificationInfo ($uk: String!, $includeKeys: Boolean!, $includeAllowed: Boolean!, $includeEndpoints: Boolean!) {
+const GetFederationVerificationInfoQuery = `query GetFederationVerificationInfo ($uk: String!, $includeAllowed: Boolean!) {
 	getDomainFederation(domain: $uk) {
 		status
-		keys @include(if: $includeKeys)
 		allowedList @include(if: $includeAllowed)
-		serviceEndpoints @include(if: $includeEndpoints)
 	}
 }
 `
 
-func (c *Client) GetFederationVerificationInfo(ctx context.Context, uk string, includeKeys bool, includeAllowed bool, includeEndpoints bool, httpRequestOptions ...client.HTTPRequestOption) (*GetFederationVerificationInfo, error) {
+func (c *Client) GetFederationVerificationInfo(ctx context.Context, uk string, includeAllowed bool, httpRequestOptions ...client.HTTPRequestOption) (*GetFederationVerificationInfo, error) {
 	vars := map[string]interface{}{
-		"uk":               uk,
-		"includeKeys":      includeKeys,
-		"includeAllowed":   includeAllowed,
-		"includeEndpoints": includeEndpoints,
+		"uk":             uk,
+		"includeAllowed": includeAllowed,
 	}
 
 	var res GetFederationVerificationInfo

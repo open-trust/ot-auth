@@ -4,8 +4,6 @@ type DomainFederation {
   updatedAt: DateTime!
   domain: String! @id @search(by: [hash]) # 联盟方可信域名
   description: String!
-  keys: [String!]! # 联盟方 OT-Auth 的公钥 JWK 数组
-  serviceEndpoints: [String!]! # 联盟方 OT-Auth 的可用服务端点
   allowedList: [String!]! # state > 0 的情况下有效，信任的联盟域的主体白名单，支持 * 匹配
   status: Int! # 联盟关系状态，0: 被信任 -> domain, 1: 信任 <- domain, 2: 双向信任 <-> domain, -1: 取消了联盟关系
 }

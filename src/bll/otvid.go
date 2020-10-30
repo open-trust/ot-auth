@@ -24,9 +24,9 @@ func (b *OTVID) VerifySelf(ctx context.Context, token string) (*otgo.OTVID, *mod
 	}
 	var info *model.VerificationInfo
 	if vid.ID.IsDomainID() {
-		info, err = b.ms.Federation.GetVerificationInfo(ctx, vid.ID, true, true, false)
+		info, err = b.ms.Federation.GetVerificationInfo(ctx, vid.ID, true)
 	} else {
-		info, err = b.ms.Registration.GetVerificationInfo(ctx, vid.ID, true)
+		info, err = b.ms.Registration.GetVerificationInfo(ctx, vid.ID, true, false)
 	}
 	if err != nil {
 		return nil, nil, gear.ErrUnauthorized.WithMsgf("%s unknown: %s", vid.ID.String(), err.Error())
@@ -35,11 +35,18 @@ func (b *OTVID) VerifySelf(ctx context.Context, token string) (*otgo.OTVID, *mod
 		return nil, nil, gear.ErrUnauthorized.WithMsgf("%s has been forbidden", vid.ID.String())
 	}
 
-	// self OTVID don't have ReleaseID
-	ks, err := otgo.ParseSet(info.Keys...)
-	if err == nil {
-		err = vid.Verify(ks, vid.ID, conf.OT.OTID)
+	if vid.ID.IsDomainID() {
+		cfg, err := conf.OT.OTClient.Domain(vid.ID.TrustDomain()).Resolve(ctx)
+		if err == nil {
+			err = vid.Verify(cfg.JWKSet, vid.ID, conf.OT.OTID)
+		}
+	} else {
+		ks, err := otgo.ParseSet(info.Keys...)
+		if err == nil {
+			err = vid.Verify(ks, vid.ID, conf.OT.OTID)
+		}
 	}
+
 	if err != nil {
 		return nil, nil, gear.ErrUnauthorized.From(err)
 	}
@@ -56,23 +63,41 @@ func (b *OTVID) Sign(ctx context.Context, subVid *otgo.OTVID) (*tpl.SignPayload,
 	if err != nil {
 		return nil, gear.ErrBadRequest.From(err)
 	}
+	res := &tpl.SignPayload{
+		Issuer:   conf.OT.OTID,
+		Audience: subVid.Audience,
+		Expiry:   subVid.Expiry.Unix(),
+		OTVID:    token,
+	}
 
-	return &tpl.SignPayload{
-		OTVID:  token,
-		Issuer: subVid.Issuer,
-		Expiry: subVid.Expiry.Unix(),
-	}, nil
+	if subVid.Audience.IsDomainID() {
+		res.ServiceEndpoints = conf.Config.ServiceEndpoints
+		return res, nil
+	}
+
+	info, err := b.ms.Registration.GetVerificationInfo(ctx, subVid.Audience, false, true)
+	if err != nil {
+		return nil, gear.ErrBadRequest.From(err)
+	}
+	if info.Status < 0 {
+		return nil, gear.ErrBadRequest.WithMsgf("%s has been forbidden", subVid.Audience.String())
+	}
+
+	if conf.SubjectType(subVid.Audience) == 2 {
+		res.ServiceEndpoints = info.ServiceEndpoints
+	}
+	return res, nil
 }
 
 // SignFromFederation ...
 func (b *OTVID) SignFromFederation(ctx context.Context, subVid *otgo.OTVID) (*tpl.SignPayload, error) {
 	trustDomain := subVid.Audience.TrustDomain()
-	info, err := b.ms.Federation.GetVerificationInfo(ctx, trustDomain.OTID(), false, false, true)
+	info, err := b.ms.Federation.GetVerificationInfo(ctx, trustDomain.OTID(), false)
 	if err != nil {
 		return nil, gear.ErrBadRequest.WithMsgf("%s unknown: %s", trustDomain.OTID().String(), err.Error())
 	}
 	if info.Status < 0 {
-		return nil, gear.ErrForbidden.WithMsgf("%s has been forbidden", trustDomain.String())
+		return nil, gear.ErrBadRequest.WithMsgf("%s has been forbidden", trustDomain.String())
 	}
 
 	input := tpl.SignInput{
@@ -84,7 +109,7 @@ func (b *OTVID) SignFromFederation(ctx context.Context, subVid *otgo.OTVID) (*tp
 	}
 	res := &tpl.SignPayload{}
 	output := &tpl.SuccessResponseType{Result: res}
-	if err = federation.Cli.Sign(ctx, trustDomain, info.ServiceEndpoints[0], input, output); err != nil {
+	if err = federation.Sign(ctx, trustDomain, input, output); err != nil {
 		return nil, err
 	}
 	return res, nil

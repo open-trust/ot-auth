@@ -29,7 +29,7 @@ jobs:
       run: |
         export TZ=UTC
         docker run --name dgraph -p 8088:8080 -d dgraph/standalone
-        sleep 5
+        sleep 10s
         curl -X POST localhost:8088/admin/schema --data-binary '@graphql/schema/schema.graphql'
 
     - name: Get dependencies

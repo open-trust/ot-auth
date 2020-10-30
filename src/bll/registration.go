@@ -33,7 +33,7 @@ func (b *Registration) Get(ctx context.Context, input *tpl.OTIDURL) (*tpl.Succes
 
 // CheckStatus ...
 func (b *Registration) CheckStatus(ctx context.Context, otid otgo.OTID, releaseID string) (bool, error) {
-	info, err := b.ms.Registration.GetVerificationInfo(ctx, otid, false)
+	info, err := b.ms.Registration.GetVerificationInfo(ctx, otid, false, false)
 	if err != nil {
 		return false, err
 	}

@@ -18,6 +18,6 @@ models:
   DateTime:
     model: github.com/99designs/gqlgen/graphql.Time
 endpoint:
-  url: http://localhost:8080/graphql
+  url: http://localhost:8088/graphql
 query:
   - "./graphql/*.graphql" # Where are all the query files located?

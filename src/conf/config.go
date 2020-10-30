@@ -66,14 +66,14 @@ func initOT(cfg *ConfigTpl) error {
 	if len(OT.PublicKeys.Keys) == 0 {
 		return errors.New("no public keys found")
 	}
-	OT.OTClient, err = otgo.NewOTClient(GlobalContext, cfg.OpenTrust.OTID)
-	if err != nil {
-		return err
-	}
+	OT.OTClient = otgo.NewOTClient(GlobalContext, cfg.OpenTrust.OTID)
 	OT.OTClient.SetPrivateKeys(*OT.PrivateKeys)
 	OT.OTClient.SetDomainKeys(*OT.PublicKeys)
+
+	cli := otgo.NewClient(nil)
 	ua := fmt.Sprintf("Go/%v %s/%s (%s)", runtime.Version(), AppName, AppVersion, OT.OTID.String())
-	OT.OTClient.SetHTTPClient(otgo.DefaultHTTPClient.WithUA(ua))
+	cli.Header.Set(gear.HeaderUserAgent, ua)
+	OT.OTClient.HTTPClient = cli
 	return nil
 }
 

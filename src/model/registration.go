@@ -119,6 +119,9 @@ func (m *Registration) getUser(ctx context.Context, input *tpl.OTIDURL) (*tpl.Re
 		return nil, err
 	}
 	doc := payload.GetUserRegistry
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", input.OTID.String())
+	}
 	res := &tpl.RegistrationPayload{
 		OTID:          input.OTID,
 		SubjectID:     doc.SubjectID,
@@ -139,6 +142,9 @@ func (m *Registration) getService(ctx context.Context, input *tpl.OTIDURL) (*tpl
 		return nil, err
 	}
 	doc := payload.GetServiceRegistry
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", input.OTID.String())
+	}
 	res := &tpl.RegistrationPayload{
 		OTID:             input.OTID,
 		SubjectID:        doc.SubjectID,
@@ -155,12 +161,12 @@ func (m *Registration) getService(ctx context.Context, input *tpl.OTIDURL) (*tpl
 }
 
 // GetVerificationInfo ...
-func (m *Registration) GetVerificationInfo(ctx context.Context, otid otgo.OTID, includeKeys bool) (*VerificationInfo, error) {
+func (m *Registration) GetVerificationInfo(ctx context.Context, otid otgo.OTID, includeKeys, includeEndpoints bool) (*VerificationInfo, error) {
 	switch conf.SubjectType(otid) {
 	case 1:
 		return m.getUserVerificationInfo(ctx, otid, includeKeys)
 	case 2:
-		return m.getServiceVerificationInfo(ctx, otid, includeKeys)
+		return m.getServiceVerificationInfo(ctx, otid, includeKeys, includeEndpoints)
 	}
 	return nil, fmt.Errorf("unknow subject type")
 }
@@ -171,16 +177,22 @@ func (m *Registration) getUserVerificationInfo(ctx context.Context, otid otgo.OT
 		return nil, err
 	}
 	doc := payload.GetUserRegistry
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", otid.String())
+	}
 	return &VerificationInfo{ID: otid, Status: doc.Status, ReleaseID: doc.ReleaseID, Keys: doc.Keys}, nil
 }
 
-func (m *Registration) getServiceVerificationInfo(ctx context.Context, otid otgo.OTID, includeKeys bool) (*VerificationInfo, error) {
-	payload, err := m.Model.GetServiceVerificationInfo(ctx, util.SubjectUK(otid), includeKeys)
+func (m *Registration) getServiceVerificationInfo(ctx context.Context, otid otgo.OTID, includeKeys, includeEndpoints bool) (*VerificationInfo, error) {
+	payload, err := m.Model.GetServiceVerificationInfo(ctx, util.SubjectUK(otid), includeKeys, includeEndpoints)
 	if err != nil {
 		return nil, err
 	}
 	doc := payload.GetServiceRegistry
-	return &VerificationInfo{ID: otid, Status: doc.Status, Keys: doc.Keys}, nil
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", otid.String())
+	}
+	return &VerificationInfo{ID: otid, Status: doc.Status, Keys: doc.Keys, ServiceEndpoints: doc.ServiceEndpoints}, nil
 }
 
 // GetUserBundles ...
@@ -190,6 +202,9 @@ func (m *Registration) GetUserBundles(ctx context.Context, input *tpl.OTIDURL) (
 		return nil, err
 	}
 	doc := payload.GetUserRegistry
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", input.OTID.String())
+	}
 	bundles := make([]tpl.Bundle, 0, len(doc.Bundles))
 	for _, b := range doc.Bundles {
 		bundles = append(bundles, tpl.Bundle{
@@ -212,6 +227,9 @@ func (m *Registration) GetServicePermissions(ctx context.Context, input *tpl.OTI
 		return nil, err
 	}
 	doc := payload.GetServiceRegistry
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", input.OTID.String())
+	}
 	permission := make([]tpl.Permission, 0, len(doc.Permissions))
 	for _, p := range doc.Permissions {
 		permission = append(permission, tpl.Permission{

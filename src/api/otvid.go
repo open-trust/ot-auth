@@ -52,8 +52,9 @@ func (a *OTVID) Sign(ctx *gear.Context) error {
 
 	var res *tpl.SignPayload
 	if vid.ID.IsDomainID() {
-		if !input.Audience.MemberOf(conf.OT.TrustDomain) {
-			return gear.ErrBadRequest.WithMsgf("%s is not member of %s", input.Audience.String(), conf.OT.TrustDomain.String())
+		// 联盟域代理请求签发 OTVID
+		if !subVid.Audience.MemberOf(conf.OT.TrustDomain) {
+			return gear.ErrBadRequest.WithMsgf("%s is not member of %s", subVid.Audience.String(), conf.OT.TrustDomain.String())
 		}
 		if signInfo.Status < 1 {
 			return gear.ErrForbidden.WithMsgf("%s is not allowed to sign OTVID", signInfo.ID.String())
@@ -65,18 +66,18 @@ func (a *OTVID) Sign(ctx *gear.Context) error {
 		}
 		res, err = a.blls.OTVID.Sign(ctx, subVid)
 	} else {
-
+		// 一般请求主体代理其它请求主体 sub 申请签发 OTVID，则必须提供目标 sub 的自签发 OTVID
 		if !vid.ID.Equal(input.Subject) {
-			// 当请求主体不是信任域主体并且是代理其它请求主体 sub 申请签发 OTVID，则必须提供目标 sub 的自签发 OTVID
 			_, signInfo, err = a.blls.OTVID.VerifySelf(ctx, input.ForwardedOTVID)
 			if err != nil {
 				return err
 			}
 		}
 
-		// 当请求主体不是信任域主体时，用内部 release ID（不信任外部输入值）
+		// 一般请求主体的 ReleaseID 不可信，用内部 release ID 覆盖
 		subVid.ReleaseID = signInfo.ReleaseID
 		if !input.Audience.MemberOf(conf.OT.TrustDomain) {
+			// 当 Audience 在联盟域时
 			res, err = a.blls.OTVID.SignFromFederation(ctx, subVid)
 		} else {
 			res, err = a.blls.OTVID.Sign(ctx, subVid)

@@ -46,7 +46,9 @@ func (t *SignInput) Validate() error {
 
 // SignPayload ...
 type SignPayload struct {
-	Issuer otgo.OTID `json:"iss"`
-	OTVID  string    `json:"otvid"`
-	Expiry int64     `json:"exp"`
+	Issuer           otgo.OTID `json:"iss"`
+	Audience         otgo.OTID `json:"aud"`
+	Expiry           int64     `json:"exp"`
+	OTVID            string    `json:"otvid"`
+	ServiceEndpoints []string  `json:"serviceEndpoints"`
 }

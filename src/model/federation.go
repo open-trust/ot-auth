@@ -4,6 +4,7 @@ import (
 	"context"
 
 	otgo "github.com/open-trust/ot-go-lib"
+	"github.com/teambition/gear"
 )
 
 // Federation ...
@@ -12,12 +13,15 @@ type Federation struct {
 }
 
 // GetVerificationInfo ...
-func (m *Federation) GetVerificationInfo(ctx context.Context, otid otgo.OTID, includeKeys, includeAllowed, includeEndpoints bool) (*VerificationInfo, error) {
-	payload, err := m.Model.GetFederationVerificationInfo(ctx, otid.TrustDomain().String(), includeKeys, includeAllowed, includeEndpoints)
+func (m *Federation) GetVerificationInfo(ctx context.Context, otid otgo.OTID, includeAllowed bool) (*VerificationInfo, error) {
+	payload, err := m.Model.GetFederationVerificationInfo(ctx, otid.TrustDomain().String(), includeAllowed)
 	if err != nil {
 		return nil, err
 	}
 	doc := payload.GetDomainFederation
-	return &VerificationInfo{ID: otid, Status: doc.Status, Keys: doc.Keys,
-		AllowedList: doc.AllowedList, ServiceEndpoints: doc.ServiceEndpoints}, nil
+	if doc == nil {
+		return nil, gear.ErrNotFound.WithMsgf("%s not found", otid.String())
+	}
+
+	return &VerificationInfo{ID: otid, Status: doc.Status, AllowedList: doc.AllowedList}, nil
 }

@@ -23,7 +23,9 @@ func NewRouters(apis *api.APIs) []*gear.Router {
 	router := gear.NewRouter()
 	router.Get("/", getVersion)
 	router.Get("/version", getVersion)
-	router.Get("/healthz", apis.Healthz.Get)
+	router.Get("/healthz", apis.Healthz.Get) // deprecated, https://kubernetes.io/docs/reference/using-api/health-checks/
+	router.Get("/livez", apis.Healthz.Get)
+	router.Get("/readyz", apis.Healthz.Get)
 	router.Get("/.well-known/open-trust-configuration", apis.WellKnown.OpenTrustConfiguration)
 
 	router.Get("/graphql", middleware.Verify, apis.GraphQL.All)
@@ -33,7 +35,7 @@ func NewRouters(apis *api.APIs) []*gear.Router {
 		Root: "/v1",
 	})
 
-	routerV1.Get("/", apis.WellKnown.ServiceEndpoints)
+	routerV1.Get("/", getVersion)
 
 	routerV1.Post("/sign", apis.OTVID.Sign) // 自签发 OTVID，在 API 内验证
 	routerV1.Post("/verify", middleware.Verify, apis.OTVID.Verify)

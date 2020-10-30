@@ -10,14 +10,12 @@ import (
 )
 
 type AddDomainFederationInput struct {
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
-	Domain           string    `json:"domain"`
-	Description      string    `json:"description"`
-	Keys             []string  `json:"keys"`
-	ServiceEndpoints []string  `json:"serviceEndpoints"`
-	AllowedList      []string  `json:"allowedList"`
-	Status           int       `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	Domain      string    `json:"domain"`
+	Description string    `json:"description"`
+	AllowedList []string  `json:"allowedList"`
+	Status      int       `json:"status"`
 }
 
 type AddDomainFederationPayload struct {
@@ -151,15 +149,13 @@ type DeleteUserRegistryPayload struct {
 }
 
 type DomainFederation struct {
-	ID               string    `json:"id"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
-	Domain           string    `json:"domain"`
-	Description      string    `json:"description"`
-	Keys             []string  `json:"keys"`
-	ServiceEndpoints []string  `json:"serviceEndpoints"`
-	AllowedList      []string  `json:"allowedList"`
-	Status           int       `json:"status"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	Domain      string    `json:"domain"`
+	Description string    `json:"description"`
+	AllowedList []string  `json:"allowedList"`
+	Status      int       `json:"status"`
 }
 
 type DomainFederationFilter struct {
@@ -177,25 +173,21 @@ type DomainFederationOrder struct {
 }
 
 type DomainFederationPatch struct {
-	CreatedAt        *time.Time `json:"createdAt"`
-	UpdatedAt        *time.Time `json:"updatedAt"`
-	Description      *string    `json:"description"`
-	Keys             []string   `json:"keys"`
-	ServiceEndpoints []string   `json:"serviceEndpoints"`
-	AllowedList      []string   `json:"allowedList"`
-	Status           *int       `json:"status"`
+	CreatedAt   *time.Time `json:"createdAt"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
+	Description *string    `json:"description"`
+	AllowedList []string   `json:"allowedList"`
+	Status      *int       `json:"status"`
 }
 
 type DomainFederationRef struct {
-	ID               *string    `json:"id"`
-	CreatedAt        *time.Time `json:"createdAt"`
-	UpdatedAt        *time.Time `json:"updatedAt"`
-	Domain           *string    `json:"domain"`
-	Description      *string    `json:"description"`
-	Keys             []string   `json:"keys"`
-	ServiceEndpoints []string   `json:"serviceEndpoints"`
-	AllowedList      []string   `json:"allowedList"`
-	Status           *int       `json:"status"`
+	ID          *string    `json:"id"`
+	CreatedAt   *time.Time `json:"createdAt"`
+	UpdatedAt   *time.Time `json:"updatedAt"`
+	Domain      *string    `json:"domain"`
+	Description *string    `json:"description"`
+	AllowedList []string   `json:"allowedList"`
+	Status      *int       `json:"status"`
 }
 
 type FloatFilter struct {
@@ -571,14 +563,12 @@ func (e DgraphIndex) MarshalGQL(w io.Writer) {
 type DomainFederationOrderable string
 
 const (
-	DomainFederationOrderableCreatedAt        DomainFederationOrderable = "createdAt"
-	DomainFederationOrderableUpdatedAt        DomainFederationOrderable = "updatedAt"
-	DomainFederationOrderableDomain           DomainFederationOrderable = "domain"
-	DomainFederationOrderableDescription      DomainFederationOrderable = "description"
-	DomainFederationOrderableKeys             DomainFederationOrderable = "keys"
-	DomainFederationOrderableServiceEndpoints DomainFederationOrderable = "serviceEndpoints"
-	DomainFederationOrderableAllowedList      DomainFederationOrderable = "allowedList"
-	DomainFederationOrderableStatus           DomainFederationOrderable = "status"
+	DomainFederationOrderableCreatedAt   DomainFederationOrderable = "createdAt"
+	DomainFederationOrderableUpdatedAt   DomainFederationOrderable = "updatedAt"
+	DomainFederationOrderableDomain      DomainFederationOrderable = "domain"
+	DomainFederationOrderableDescription DomainFederationOrderable = "description"
+	DomainFederationOrderableAllowedList DomainFederationOrderable = "allowedList"
+	DomainFederationOrderableStatus      DomainFederationOrderable = "status"
 )
 
 var AllDomainFederationOrderable = []DomainFederationOrderable{
@@ -586,15 +576,13 @@ var AllDomainFederationOrderable = []DomainFederationOrderable{
 	DomainFederationOrderableUpdatedAt,
 	DomainFederationOrderableDomain,
 	DomainFederationOrderableDescription,
-	DomainFederationOrderableKeys,
-	DomainFederationOrderableServiceEndpoints,
 	DomainFederationOrderableAllowedList,
 	DomainFederationOrderableStatus,
 }
 
 func (e DomainFederationOrderable) IsValid() bool {
 	switch e {
-	case DomainFederationOrderableCreatedAt, DomainFederationOrderableUpdatedAt, DomainFederationOrderableDomain, DomainFederationOrderableDescription, DomainFederationOrderableKeys, DomainFederationOrderableServiceEndpoints, DomainFederationOrderableAllowedList, DomainFederationOrderableStatus:
+	case DomainFederationOrderableCreatedAt, DomainFederationOrderableUpdatedAt, DomainFederationOrderableDomain, DomainFederationOrderableDescription, DomainFederationOrderableAllowedList, DomainFederationOrderableStatus:
 		return true
 	}
 	return false
