@@ -1,8 +1,6 @@
 package tpl
 
 import (
-	"time"
-
 	"github.com/open-trust/ot-auth/src/conf"
 	"github.com/open-trust/ot-auth/src/util"
 	otgo "github.com/open-trust/ot-go-lib"
@@ -23,8 +21,8 @@ func (t *OTIDURL) Validate() error {
 	return nil
 }
 
-// AddRegistrationInput ...
-type AddRegistrationInput struct {
+// RegistryInput ...
+type RegistryInput struct {
 	SubjectID        string   `json:"subjectId"`
 	SubjectType      string   `json:"subjectType"`
 	Description      string   `json:"description"`
@@ -34,7 +32,7 @@ type AddRegistrationInput struct {
 }
 
 // Validate 实现 gear.BodyTemplate
-func (t *AddRegistrationInput) Validate() error {
+func (t *RegistryInput) Validate() error {
 	if t.SubjectID == "" {
 		return gear.ErrBadRequest.WithMsgf("subjectId required")
 	}
@@ -48,9 +46,13 @@ func (t *AddRegistrationInput) Validate() error {
 	if t.ServiceEndpoints == nil {
 		t.ServiceEndpoints = []string{}
 	}
-	if l := len(t.ServiceEndpoints); l > 100 {
+	if l := len(t.ServiceEndpoints); l > 64 {
 		return gear.ErrBadRequest.WithMsgf("too many serviceEndpoints (> %d)", l)
 	}
+	if !util.CheckServiceEndpoints(t.ServiceEndpoints...) {
+		return gear.ErrBadRequest.WithMsgf("invalid serviceEndpoints")
+	}
+
 	ks, err := otgo.ParseSet(t.Keys...)
 	if err != nil {
 		return err
@@ -64,26 +66,44 @@ func (t *AddRegistrationInput) Validate() error {
 	if len(t.Description) > 1024 {
 		return gear.ErrBadRequest.WithMsgf("description size too large")
 	}
-	if !util.CheckServiceEndpoints(t.ServiceEndpoints...) {
-		return gear.ErrBadRequest.WithMsgf("invalid serviceEndpoints")
+	return nil
+}
+
+// AddRegistriesInput ...
+type AddRegistriesInput struct {
+	*RegistryInput
+	Registries []*RegistryInput `json:"registries"`
+}
+
+// Validate 实现 gear.BodyTemplate
+func (t *AddRegistriesInput) Validate() error {
+	if t.RegistryInput != nil {
+		if err := t.RegistryInput.Validate(); err != nil {
+			return err
+		}
 	}
-	if len(t.ServiceEndpoints) > 10 {
-		return gear.ErrBadRequest.WithMsgf("too many serviceEndpoints")
+	for _, ele := range t.Registries {
+		if ele == nil {
+			return gear.ErrBadRequest.WithMsgf("invalid input for registries")
+		}
+		if err := ele.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// RegistrationPayload ...
-type RegistrationPayload struct {
-	OTID             otgo.OTID     `json:"otid"`
+// RegistryPayload ...
+type RegistryPayload struct {
+	OTID             *otgo.OTID    `json:"otid"`
 	Status           int           `json:"status"`
 	SubjectID        string        `json:"subjectId,omitempty"`
 	SubjectType      string        `json:"subjectType,omitempty"`
 	Description      *string       `json:"description,omitempty"`
 	Keys             *[]string     `json:"keys,omitempty"`
-	CreatedAt        *time.Time    `json:"createdAt,omitempty"`
-	UpdatedAt        *time.Time    `json:"updatedAt,omitempty"`
-	KeysUpdatedAt    *time.Time    `json:"keysUpdatedAt,omitempty"`
+	CreatedAt        *int64        `json:"createdAt,omitempty"`
+	UpdatedAt        *int64        `json:"updatedAt,omitempty"`
+	KeysUpdatedAt    *int64        `json:"keysUpdatedAt,omitempty"`
 	ServiceEndpoints *[]string     `json:"serviceEndpoints,omitempty"`
 	Bundles          *[]Bundle     `json:"bundles,omitempty"`
 	Permissions      *[]Permission `json:"permissions,omitempty"`
@@ -91,8 +111,10 @@ type RegistrationPayload struct {
 
 // Bundle ...
 type Bundle struct {
-	Provider otgo.OTID `json:"provider"`
-	BundleID string    `json:"bundleId"`
+	OTID      *otgo.OTID `json:"otid,omitempty"`
+	Provider  *otgo.OTID `json:"provider,omitempty"`
+	BundleID  string     `json:"bundleId"`
+	Extension string     `json:"extension"`
 }
 
 // Permission ...
@@ -100,4 +122,43 @@ type Permission struct {
 	Resource   string   `json:"resource"`
 	Operations []string `json:"operations"`
 	Extensions []string `json:"extensions"`
+}
+
+// UpdateUsersBundleInput ...
+type UpdateUsersBundleInput struct {
+	Provider *otgo.OTID `json:"provider,omitempty"`
+	Bundles  []*struct {
+		OTID      otgo.OTID `json:"otid"`
+		BundleID  string    `json:"bundleId"`
+		Extension string    `json:"extension"`
+	} `json:"bundles"`
+}
+
+// Validate 实现 gear.BodyTemplate
+func (t *UpdateUsersBundleInput) Validate() error {
+	if t.Provider != nil && conf.SubjectType(*t.Provider) != 2 {
+		return gear.ErrBadRequest.WithMsgf("provider should be one of service type, but got %s", t.Provider.Type())
+	}
+
+	for _, ele := range t.Bundles {
+		if ele == nil {
+			return gear.ErrBadRequest.WithMsgf("invalid input for bundles")
+		}
+
+		if conf.SubjectType(ele.OTID) != 1 {
+			return gear.ErrBadRequest.WithMsgf("should be one of user types")
+		}
+
+		l := len(ele.BundleID)
+		if l == 0 {
+			return gear.ErrBadRequest.WithMsg("bundleId required")
+		}
+		if l > 64 {
+			return gear.ErrBadRequest.WithMsgf("bundleId is too long (> %d)", l)
+		}
+		if l = len(ele.Extension); l > 256 {
+			return gear.ErrBadRequest.WithMsgf("extension is too long (> %d)", l)
+		}
+	}
+	return nil
 }

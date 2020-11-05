@@ -25,6 +25,9 @@ func Verify(ctx *gear.Context) error {
 	if err != nil {
 		return gear.ErrUnauthorized.From(err)
 	}
+	if conf.SubjectType(vid.ID) == 1 {
+		return gear.ErrForbidden.WithMsgf("subject should be one of service, but got %s", vid.ID.String())
+	}
 
 	ctx.SetAny(authKey, vid)
 	logging.AccessLogger.SetTo(ctx, "subject", vid.ID.String())

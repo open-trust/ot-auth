@@ -40,24 +40,24 @@ func NewRouters(apis *api.APIs) []*gear.Router {
 	routerV1.Post("/sign", apis.OTVID.Sign) // 自签发 OTVID，在 API 内验证
 	routerV1.Post("/verify", middleware.Verify, apis.OTVID.Verify)
 
-	routerV1.Post("/federations", middleware.Verify, nil)
-	routerV1.Get("/federations/:domain", middleware.Verify, nil)
-	routerV1.Patch("/federations/:domain", middleware.Verify, nil)
-	routerV1.Delete("/federations/:domain", middleware.Verify, nil)
+	routerV1.Post("/federation", middleware.Verify, nil)
+	routerV1.Get("/federation/:domain", middleware.Verify, nil)
+	routerV1.Patch("/federation/:domain", middleware.Verify, nil)
+	routerV1.Delete("/federation/:domain", middleware.Verify, nil)
 
-	routerV1.Post("/registrations", middleware.Verify, apis.Registration.Add)
-	routerV1.Get("/registrations", middleware.Verify, apis.Registration.List)
-	routerV1.Get("/registrations/:otid", middleware.Verify, apis.Registration.Get)
-	routerV1.Patch("/registrations/:otid", middleware.Verify, nil)
-	routerV1.Delete("/registrations/:otid", middleware.Verify, nil)
+	routerV1.Post("/registries", middleware.Verify, apis.Registration.Add)
+	routerV1.Get("/registries", middleware.Verify, apis.Registration.List)
+	routerV1.Get("/registries/:otid", middleware.Verify, apis.Registration.Get)
+	routerV1.Patch("/registries/:otid", middleware.Verify, nil)
+	routerV1.Delete("/registries/:otid", middleware.Verify, nil)
 
-	routerV1.Get("/registrations/:otid/bundles", middleware.Verify, apis.Registration.GetUserBundles)
-	routerV1.Post("/registrations/:otid/bundles", middleware.Verify, nil)
-	routerV1.Delete("/registrations/:otid/bundles", middleware.Verify, nil)
+	routerV1.Post("/registries/bundles", middleware.Verify, apis.Registration.UpdateUsersBundle)
+	routerV1.Get("/registries/:otid/bundles", middleware.Verify, apis.Registration.GetUserBundles)
+	routerV1.Delete("/registries/:otid/bundles", middleware.Verify, nil)
 
-	routerV1.Get("/registrations/:otid/permissions", middleware.Verify, apis.Registration.GetServicePermissions)
-	routerV1.Post("/registrations/:otid/permissions", middleware.Verify, nil)
-	routerV1.Delete("/registrations/:otid/permissions", middleware.Verify, nil)
+	routerV1.Get("/registries/:otid/permissions", middleware.Verify, apis.Registration.GetServicePermissions)
+	routerV1.Post("/registries/:otid/permissions", middleware.Verify, nil)
+	routerV1.Delete("/registries/:otid/permissions", middleware.Verify, nil)
 
 	return []*gear.Router{router, routerV1}
 }

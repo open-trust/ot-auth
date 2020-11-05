@@ -27,20 +27,42 @@ type Service struct {
 	*dgraph.Dgraph
 }
 
-// FindPermissions ...
-func (s *Service) FindPermissions(ctx context.Context, subject otgo.OTID, resource Resource, operation Operation) (Permissions, error) {
-	res, err := s.Dgraph.GetServicePermissions(ctx, util.ServicePermissionUK(subject, string(resource)))
+type permissionOut struct {
+	Status     int      `json:"status"`
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+	Extensions []string `json:"extensions"`
+}
+
+// FindPermission ...
+func (s *Service) FindPermission(ctx context.Context, subject otgo.OTID, resource Resource, operation Operation) (*Permission, error) {
+	vars := map[string]string{"$uk": util.ServicePermissionUK(subject, string(resource))}
+	q := `query q($uk: string) {
+		result(func: eq(permissionUK: $uk)) @cascade @normalize {
+			resource: resource
+			operations: operations
+			extensions: extensions
+			serviceRegistry {
+				status: status
+			}
+		}
+	}
+	`
+
+	ps := new(permissionOut)
+	out := &otgo.Response{Result: ps}
+	err := s.Query(ctx, q, vars, out)
 	if err != nil {
 		return nil, err
 	}
-	if res.GetServiceRegistry.Status < 0 {
+	if ps.Status < 0 {
 		return nil, fmt.Errorf("%s had been forbidden", subject.String())
 	}
-	ps := make([]Permission, 0, len(res.GetServiceRegistry.Permissions))
-	for _, v := range res.GetServiceRegistry.Permissions {
-		ps = append(ps, Permission{Resource: v.Resource, Operations: v.Operations, Extensions: v.Extensions})
+	p := Permission{Resource: ps.Resource, Operations: ps.Operations, Extensions: ps.Extensions}
+	if !p.Match(string(resource), string(operation)) {
+		return nil, fmt.Errorf("no permissions found")
 	}
-	return ps, nil
+	return &p, nil
 }
 
 // FindPermissions ...
@@ -48,7 +70,11 @@ func FindPermissions(ctx context.Context, subject otgo.OTID, resource Resource, 
 	var err error
 	ps := globalPM.Find(subject.String(), string(resource), string(operation))
 	if len(ps) == 0 {
-		ps, err = as.FindPermissions(ctx, subject, resource, operation)
+		var p *Permission
+		p, err = as.FindPermission(ctx, subject, resource, operation)
+		if err == nil {
+			ps = append(ps, *p)
+		}
 	}
 	if err != nil {
 		return nil, gear.ErrForbidden.WithMsgf("find permissions error: %s", err.Error())

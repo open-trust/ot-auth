@@ -14,14 +14,31 @@ type Federation struct {
 
 // GetVerificationInfo ...
 func (m *Federation) GetVerificationInfo(ctx context.Context, otid otgo.OTID, includeAllowed bool) (*VerificationInfo, error) {
-	payload, err := m.Model.GetFederationVerificationInfo(ctx, otid.TrustDomain().String(), includeAllowed)
+	vars := map[string]string{"$domain": otid.TrustDomain().String()}
+	q := `query q($domain: string) {
+		result(func: eq(domain: $domain)) {
+			status
+		}
+	}
+	`
+	if includeAllowed {
+		q = `query q($domain: string) {
+			result(func: eq(domain: $domain)) {
+				status
+				allowedList
+			}
+		}
+		`
+	}
+	res := make([]*VerificationInfo, 0)
+	out := &otgo.Response{Result: &res}
+	err := m.Model.Query(ctx, q, vars, out)
 	if err != nil {
 		return nil, err
 	}
-	doc := payload.GetDomainFederation
-	if doc == nil {
+	if len(res) == 0 {
 		return nil, gear.ErrNotFound.WithMsgf("%s not found", otid.String())
 	}
-
-	return &VerificationInfo{ID: otid, Status: doc.Status, AllowedList: doc.AllowedList}, nil
+	res[0].ID = otid
+	return res[0], nil
 }

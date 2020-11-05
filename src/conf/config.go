@@ -84,7 +84,8 @@ type Logger struct {
 
 // Dgraph ...
 type Dgraph struct {
-	Endpoint string `json:"graphql_endpoint" yaml:"graphql_endpoint"`
+	Insecure     bool   `json:"insecure" yaml:"insecure"`
+	GRPCEndpoint string `json:"grpc_endpoint" yaml:"grpc_endpoint"`
 }
 
 // OpenTrust ...

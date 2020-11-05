@@ -1,14 +1,11 @@
-.PHONY: dev test doc gen
+.PHONY: dev test doc
 
 APP_NAME := ot-auth
 APP_PATH := github.com/open-trust/ot-auth
 APP_VERSION := $(shell git describe --tags --always --match "v[0-9]*")
 
-gen:
-	@gqlgenc
-
 dev:
-	@CONFIG_FILE_PATH=${PWD}/config/default.yaml APP_ENV=development go run main.go
+	@CONFIG_FILE_PATH=${PWD}/config/default.yaml APP_ENV=testing go run main.go
 
 test:
 	@CONFIG_FILE_PATH=${PWD}/config/test.yaml APP_ENV=testing go test -v ./...

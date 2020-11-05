@@ -9,13 +9,13 @@ import (
 func init() {
 	// 初始化 OT-Auth 自身作为可信主体的默认权限
 	globalPM.Set(conf.OT.OTID.String(), Permission{
-		Resource:   string(ResRegistrationAll),
+		Resource:   string(ResRegistryAll),
 		Operations: []string{string(OpGet), string(OpCreate)},
-		Extensions: []string{EkCreateRegistration.V("*"), EkGetRegistrationBundles.V("*")},
+		Extensions: []string{EkCreateRegistry.V("*"), EkGetRegistryBundles.V("*")},
 	})
 	// 初始化 OT-Auth 以外的其它可信主体的默认权限
 	globalPM.Set(conf.OT.OTID.String()+":*", Permission{
-		Resource:   string(ResRegistration),
+		Resource:   string(ResRegistry),
 		Operations: []string{string(OpGet)},
 	})
 
@@ -23,7 +23,7 @@ func init() {
 		globalPM.Set(conf.OT.OTID.String(), Permission{
 			Resource:   string(ResAll),
 			Operations: []string{string(OpAll)},
-			Extensions: []string{EkCreateRegistration.V("*"), EkGetRegistrationBundles.V("*")},
+			Extensions: []string{EkCreateRegistry.V("*"), EkGetRegistryBundles.V("*"), EkCreateRegistryBundle.V("*")},
 		})
 	}
 }
@@ -56,14 +56,14 @@ const (
 	ResAll Resource = "*"
 	// ResFederation ...
 	ResFederation Resource = "federation"
-	// ResRegistrationAll ...
-	ResRegistrationAll Resource = "registration*"
-	// ResRegistration ...
-	ResRegistration Resource = "registration"
-	// ResRegistrationBundle ...
-	ResRegistrationBundle Resource = "registration.bundle"
-	// ResRegistrationPermission ...
-	ResRegistrationPermission Resource = "registration.permission"
+	// ResRegistryAll ...
+	ResRegistryAll Resource = "registry*"
+	// ResRegistry ...
+	ResRegistry Resource = "registry"
+	// ResRegistryBundle ...
+	ResRegistryBundle Resource = "registry.bundle"
+	// ResRegistryPermission ...
+	ResRegistryPermission Resource = "registry.permission"
 )
 
 // ExtensionKey ...
@@ -75,10 +75,17 @@ func (e ExtensionKey) V(value string) string {
 }
 
 const (
-	// EkCreateRegistration ...
-	EkCreateRegistration ExtensionKey = "createRegistrationPattern:"
-	// EkGetRegistrationBundles ...
-	EkGetRegistrationBundles ExtensionKey = "getRegistrationBundlesPattern:"
+	// EkCreateRegistry ...
+	EkCreateRegistry ExtensionKey = "createRegistryPattern:"
+
+	// EkCreateRegistryBundle ...
+	EkCreateRegistryBundle ExtensionKey = "createRegistryBundlePattern:"
+
+	// EkGetRegistryBundles ...
+	EkGetRegistryBundles ExtensionKey = "getRegistryBundlesPattern:"
+
+	// EkGetRegistryPermissions ...
+	EkGetRegistryPermissions ExtensionKey = "getRegistryPermissionsPattern:"
 )
 
 // Permission ...
