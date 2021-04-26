@@ -12,17 +12,17 @@ import (
 	otgo "github.com/open-trust/ot-go-lib"
 )
 
-// SubjectUK generate a composite unique index value for UserRegistry or ServiceRegistry.
+// SubjectUK generate a composite unique index value for OTUser or OTService.
 func SubjectUK(otid otgo.OTID) string {
 	return hashBase64(otid.Type(), otid.ID())
 }
 
-// UserBundleUK generate a composite unique index value for UserRegistryBundle.
+// UserBundleUK generate a composite unique index value for OTUserBundle.
 func UserBundleUK(provider otgo.OTID, bundleID string) string {
 	return hashBase64(provider.Type(), provider.ID(), bundleID)
 }
 
-// ServicePermissionUK generate a composite unique index value for ServiceRegistryPermission.
+// ServicePermissionUK generate a composite unique index value for OTServicePermission.
 func ServicePermissionUK(service otgo.OTID, resource string) string {
 	return hashBase64(service.Type(), service.ID(), resource)
 }

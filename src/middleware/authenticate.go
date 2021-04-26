@@ -11,7 +11,6 @@ type contextKey int
 
 const (
 	authKey contextKey = iota
-	acKey
 )
 
 // Verify 验证请求者身份，如果验证失败，则返回 401 的 gear.HTTPError

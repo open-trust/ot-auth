@@ -50,14 +50,14 @@ func NewRouters(apis *api.APIs) []*gear.Router {
 	routerV1.Get("/registries/:otid", middleware.Verify, apis.Registration.Get)
 	routerV1.Patch("/registries/:otid", middleware.Verify, nil)
 	routerV1.Delete("/registries/:otid", middleware.Verify, nil)
-
-	routerV1.Post("/registries/bundles", middleware.Verify, apis.Registration.UpdateUsersBundle)
 	routerV1.Get("/registries/:otid/bundles", middleware.Verify, apis.Registration.GetUserBundles)
 	routerV1.Delete("/registries/:otid/bundles", middleware.Verify, nil)
 
 	routerV1.Get("/registries/:otid/permissions", middleware.Verify, apis.Registration.GetServicePermissions)
 	routerV1.Post("/registries/:otid/permissions", middleware.Verify, nil)
 	routerV1.Delete("/registries/:otid/permissions", middleware.Verify, nil)
+
+	routerV1.Post("/bundles", middleware.Verify, apis.Registration.UpdateUsersBundle)
 
 	return []*gear.Router{router, routerV1}
 }

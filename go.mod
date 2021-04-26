@@ -10,7 +10,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.1.0
 	go.uber.org/dig v1.10.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
-	golang.org/x/tools v0.0.0-20201105001634-bc3cf281b174 // indirect
-	google.golang.org/grpc v1.33.1
+	golang.org/x/tools v0.0.0-20201111224557-41a3a589386c // indirect
+	google.golang.org/grpc v1.33.2
 	gopkg.in/yaml.v2 v2.3.0
 )

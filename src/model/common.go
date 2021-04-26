@@ -1,14 +1,10 @@
 package model
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/dgraph-io/dgo/v200/protos/api"
 	"github.com/open-trust/ot-auth/src/conf"
@@ -66,81 +62,12 @@ type VerificationInfo struct {
 	ServiceEndpoints []string `json:"serviceEndpoints"`
 }
 
-// Nquads ...
-type Nquads struct {
-	ID    string
-	Type  string
-	UKkey string
-	UKval string
-	KV    map[string]interface{}
-}
-
-// Bytes ...
-func (ns Nquads) Bytes() ([]byte, error) {
-	if ns.ID == "" {
-		return nil, errors.New("ID are required")
-	}
-
-	id := ns.ID
-	if !strings.HasPrefix(id, "_:") && !strings.HasPrefix(id, "uid(") {
-		id = fmt.Sprintf("<%s>", id)
-	}
-
-	var b bytes.Buffer
-	if ns.Type != "" {
-		fmt.Fprintf(&b, "%s <%s> \"%v\" .\n", id, "dgraph.type", ns.Type)
-	}
-	for k, v := range ns.KV {
-		switch val := v.(type) {
-		case bool:
-			fmt.Fprintf(&b, "%s <%s> \"%t\"^^<xs:boolean> .\n", id, k, val)
-		case string:
-			if val != "*" && !strings.HasPrefix(val, "uid(") && !strings.HasPrefix(val, "val(") {
-				val = strconv.Quote(val)
-			}
-			fmt.Fprintf(&b, "%s <%s> %s .\n", id, k, val)
-		case int, int64:
-			fmt.Fprintf(&b, "%s <%s> \"%v\"^^<xs:int> .\n", id, k, val)
-		case float64:
-			fmt.Fprintf(&b, "%s <%s> \"%v\"^^<xs:double> .\n", id, k, val)
-		case time.Time:
-			fmt.Fprintf(&b, "%s <%s> \"%s\"^^<xs:dateTime> .\n", id, k, val.UTC().Format(time.RFC3339))
-		case []string:
-			for _, e := range val {
-				if e != "*" && !strings.HasPrefix(e, "uid(") && !strings.HasPrefix(e, "val(") {
-					e = strconv.Quote(e)
-				}
-				fmt.Fprintf(&b, "%s <%s> %s .\n", id, k, e)
-			}
-		case []int:
-			for _, e := range val {
-				fmt.Fprintf(&b, "%s <%s> \"%v\"^^<xs:int> .\n", id, k, e)
-			}
-		case []int64:
-			for _, e := range val {
-				fmt.Fprintf(&b, "%s <%s> \"%v\"^^<xs:int> .\n", id, k, e)
-			}
-		case []float64:
-			for _, e := range val {
-				fmt.Fprintf(&b, "%s <%s> \"%v\"^^<xs:double> .\n", id, k, e)
-			}
-		case []time.Time:
-			for _, e := range val {
-				fmt.Fprintf(&b, "%s <%s> \"%s\"^^<xs:dateTime> .\n", id, k, e.Format(time.RFC3339))
-			}
-		default:
-			return nil, fmt.Errorf("invalid value: %v", v)
-		}
-	}
-	return b.Bytes(), nil
-}
-
 type jsonUID struct {
 	UID string `json:"uid"`
 }
 
 // Create ...
-func (m *Model) Create(ctx context.Context, nq *Nquads) error {
+func (m *Model) Create(ctx context.Context, nq *dgraph.Nquads) error {
 	if nq.UKkey == "" || nq.UKval == "" || nq.Type == "" {
 		return errors.New("UK and Type required for Create")
 	}
@@ -175,7 +102,7 @@ func (m *Model) Create(ctx context.Context, nq *Nquads) error {
 }
 
 // CreateOrUpdate ...
-func (m *Model) CreateOrUpdate(ctx context.Context, qs string, create, update *Nquads) error {
+func (m *Model) CreateOrUpdate(ctx context.Context, qs string, create, update *dgraph.Nquads) error {
 	if create.UKkey == "" || create.UKval == "" || create.Type == "" {
 		return errors.New("UK and Type required for CreateOrUpdate")
 	}

@@ -1,61 +1,63 @@
-type DomainFederation {
+type OTDomain {
   id: ID!
-  createdAt: Int! @dgraph(pred: "createdAt")
-  updatedAt: Int! @dgraph(pred: "updatedAt")
-  domain: String! @id @search(by: [hash, term, regexp]) @dgraph(pred: "domain") # 联盟方可信域名
-  description: String! @dgraph(pred: "description")
-  allowedList: [String!]! @dgraph(pred: "allowedList") # state > 0 的情况下有效，信任的联盟域的主体白名单，支持 * 匹配
-  status: Int! @dgraph(pred: "status") # 联盟关系状态，0: 被信任 -> domain, 1: 信任 <- domain, 2: 双向信任 <-> domain, -1: 取消了联盟关系
+  createdAt: Int! @dgraph(pred: "OT.createdAt")
+  updatedAt: Int! @dgraph(pred: "OT.updatedAt")
+  domain: String! @id @search(by: [hash, term, regexp]) @dgraph(pred: "OT.domain") # 联盟方可信域名
+  description: String! @dgraph(pred: "OT.description")
+  allowedServices: [OTService!]! @dgraph(pred: "OT.allowedServices")
+  status: Int! @dgraph(pred: "OT.status") # 联盟关系状态，0: 信任, -1: 取消了联盟关系
 }
 
-type ServiceRegistry {
+type OTService {
   id: ID!
-  createdAt: Int! @dgraph(pred: "createdAt")
-  updatedAt: Int! @dgraph(pred: "updatedAt")
-  subjectId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "subjectId")
-  subjectType: String! @search(by: [hash]) @dgraph(pred: "subjectType")
-  description: String!  @dgraph(pred: "description")
-  keys: [String!] @dgraph(pred: "keys") # 存储的公钥 JWK 数组
-  keysUpdatedAt: Int! @dgraph(pred: "keysUpdatedAt") # 存储的公钥更新时间
-  status: Int! @dgraph(pred: "status") # 登记状态，-1 表示禁用
-  serviceEndpoints: [String!]! @dgraph(pred: "serviceEndpoints")
-  permissions: [ServiceRegistryPermission!] @dgraph(pred: "~serviceRegistry")
-  uk: String! @id @dgraph(pred: "serviceUK")  # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID))
+  createdAt: Int! @dgraph(pred: "OT.createdAt")
+  updatedAt: Int! @dgraph(pred: "OT.updatedAt")
+  subjectId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "OT.subjectId")
+  subjectType: String! @search(by: [hash]) @dgraph(pred: "OT.subjectType")
+  description: String!  @dgraph(pred: "OT.description")
+  keys: [String!] @dgraph(pred: "OT.keys") # 存储的公钥 JWK 数组
+  keysUpdatedAt: Int! @dgraph(pred: "OT.keysUpdatedAt") # 存储的公钥更新时间
+  status: Int! @dgraph(pred: "OT.status") # 登记状态，-1 表示禁用
+  serviceEndpoints: [String!]! @dgraph(pred: "OT.serviceEndpoints")
+  permissions: [OTServicePermission!] @dgraph(pred: "~OT.serviceRegistry")
+  allowedPatterns: [String!]! @dgraph(pred: "OT.allowedPatterns") # 信任的联盟域的主体白名单，支持 * 匹配
+  uk: String! @id @dgraph(pred: "OT.S.UK")  # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID))
 }
 
-type ServiceRegistryPermission {
+type OTPermission {
   id: ID!
-  createdAt: Int! @dgraph(pred: "createdAt")
-  updatedAt: Int! @dgraph(pred: "updatedAt")
-  resource: String! @search(by: [hash, term, regexp]) @dgraph(pred: "resource") # 资源名称
-  operations: [String!]! @search(by: [hash]) @dgraph(pred: "operations") # 操作名称数组
-  extensions: [String!]! @dgraph(pred: "extensions") # 用于业务自定义逻辑的扩展数据
-  registry: ServiceRegistry! @dgraph(pred: "serviceRegistry") # 所属的服务类主体
-  uk: String! @id @dgraph(pred: "permissionUK") # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID, resource))
+  createdAt: Int! @dgraph(pred: "OT.createdAt")
+  updatedAt: Int! @dgraph(pred: "OT.updatedAt")
+  objectType: String! @search(by: [hash]) @dgraph(pred: "OT.OType") # 资源名称
+  operation: String! @search(by: [hash]) @dgraph(pred: "OT.op") # 操作名称
+  extensions: [String!]! @dgraph(pred: "OT.extensions") # 用于业务自定义逻辑的扩展数据
+  toObjects: [OTACObject!]! @dgraph(pred: "OTAC.P-Os")
+  service: OTService! @dgraph(pred: "OT.P-S") # 所属的服务类主体
+  uk: String! @id @dgraph(pred: "OT.P.UK") # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID, resource))
 }
 
-type UserRegistry {
+type OTUser {
   id: ID!
-  createdAt: Int! @dgraph(pred: "createdAt")
-  updatedAt: Int! @dgraph(pred: "updatedAt")
-  subjectId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "subjectId")
-  subjectType: String! @dgraph(pred: "subjectType")
-  description: String!  @dgraph(pred: "description")
-  keys: [String!] @dgraph(pred: "keys") # 存储的公钥 JWK 数组
-  keysUpdatedAt: Int! @dgraph(pred: "keysUpdatedAt") # 存储的公钥更新时间
-  status: Int! @dgraph(pred: "status") # 登记状态，-1 表示禁用
-  releaseId: String! @dgraph(pred: "releaseId") # 用户类可信主体登记的可信发布标识
-  bundles: [UserRegistryBundle!] @dgraph(pred: "~userRegistry") # 绑定的第三方 ID 数组
-  uk: String! @id @dgraph(pred: "userUK") # 联合索引 Base64(BLAKE2b.Sum256(userType, userID))
+  createdAt: Int! @dgraph(pred: "OT.createdAt")
+  updatedAt: Int! @dgraph(pred: "OT.updatedAt")
+  subjectId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "OT.subjectId")
+  subjectType: String! @dgraph(pred: "OT.subjectType")
+  description: String!  @dgraph(pred: "OT.description")
+  keys: [String!] @dgraph(pred: "OT.keys") # 存储的公钥 JWK 数组
+  keysUpdatedAt: Int! @dgraph(pred: "OT.keysUpdatedAt") # 存储的公钥更新时间
+  status: Int! @dgraph(pred: "OT.status") # 登记状态，-1 表示禁用
+  releaseId: String! @dgraph(pred: "OT.releaseId") # 用户类可信主体登记的可信发布标识
+  bundles: [OTUserBundle!] @dgraph(pred: "~OT.B-U") # 绑定的第三方 ID 数组
+  uk: String! @id @dgraph(pred: "OT.U.UK") # 联合索引 Base64(BLAKE2b.Sum256(userType, userID))
 }
 
-type UserRegistryBundle {
+type OTUserBundle {
   id: ID!
-  createdAt: Int! @dgraph(pred: "createdAt")
-  updatedAt: Int! @dgraph(pred: "updatedAt")
-  provider: ServiceRegistry! @dgraph(pred: "provider") # 绑定的第三方 ID 服务提供方
-  bundleId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "bundleId") # 绑定的第三方 ID
-  extension: String! @dgraph(pred: "extension")
-  registry: UserRegistry! @dgraph(pred: "userRegistry") # 所属的用户类主体
-  uk: String! @id @dgraph(pred: "bundleUK") # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID, bundleId))
+  createdAt: Int! @dgraph(pred: "OT.createdAt")
+  updatedAt: Int! @dgraph(pred: "OT.updatedAt")
+  service: OTService! @dgraph(pred: "OT.B-S") # 绑定的第三方 ID 服务提供方
+  user: OTUser! @dgraph(pred: "OT.B-U") # 所属的用户类主体
+  bundleId: String! @search(by: [hash, term, regexp]) @dgraph(pred: "OT.bundleId") # 绑定的第三方 ID
+  extension: String! @dgraph(pred: "OT.extension")
+  uk: String! @id @dgraph(pred: "OT.B.UK") # 联合索引 Base64(BLAKE2b.Sum256(serviceType, serviceID, bundleId))
 }

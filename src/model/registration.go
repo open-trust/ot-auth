@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/open-trust/ot-auth/src/conf"
+	"github.com/open-trust/ot-auth/src/service/dgraph"
 	"github.com/open-trust/ot-auth/src/tpl"
 	"github.com/open-trust/ot-auth/src/util"
 	otgo "github.com/open-trust/ot-go-lib"
@@ -19,7 +20,7 @@ type Registration struct {
 
 // Add ...
 func (m *Registration) Add(ctx context.Context, input *tpl.RegistryInput) (*tpl.RegistryPayload, error) {
-	var nq *Nquads
+	var nq *dgraph.Nquads
 	now := util.UnixMS()
 	res := &tpl.RegistryPayload{
 		OTID:          &input.OTID,
@@ -35,10 +36,10 @@ func (m *Registration) Add(ctx context.Context, input *tpl.RegistryInput) (*tpl.
 
 	switch conf.SubjectType(input.OTID) {
 	case 1:
-		nq = &Nquads{
+		nq = &dgraph.Nquads{
 			UKkey: "userUK",
 			UKval: util.SubjectUK(input.OTID),
-			Type:  "UserRegistry",
+			Type:  "OTUser",
 			KV: map[string]interface{}{
 				"createdAt":     now,
 				"updatedAt":     now,
@@ -53,10 +54,10 @@ func (m *Registration) Add(ctx context.Context, input *tpl.RegistryInput) (*tpl.
 		}
 	case 2:
 		res.ServiceEndpoints = &input.ServiceEndpoints
-		nq = &Nquads{
+		nq = &dgraph.Nquads{
 			UKkey: "serviceUK",
 			UKval: util.SubjectUK(input.OTID),
-			Type:  "ServiceRegistry",
+			Type:  "OTService",
 			KV: map[string]interface{}{
 				"createdAt":        now,
 				"updatedAt":        now,
@@ -261,10 +262,10 @@ func (m *Registration) UpdateUserBundle(ctx context.Context, input *tpl.Bundle) 
 	}
 	`, util.SubjectUK(*input.Provider), util.SubjectUK(*input.OTID))
 
-	create := &Nquads{
+	create := &dgraph.Nquads{
 		UKkey: "bundleUK",
 		UKval: util.UserBundleUK(*input.Provider, input.BundleID),
-		Type:  "UserRegistryBundle",
+		Type:  "OTUserBundle",
 		KV: map[string]interface{}{
 			"createdAt":    now,
 			"updatedAt":    now,
@@ -275,7 +276,7 @@ func (m *Registration) UpdateUserBundle(ctx context.Context, input *tpl.Bundle) 
 		},
 	}
 
-	update := &Nquads{
+	update := &dgraph.Nquads{
 		KV: map[string]interface{}{
 			"updatedAt": now,
 			"extension": input.Extension,
